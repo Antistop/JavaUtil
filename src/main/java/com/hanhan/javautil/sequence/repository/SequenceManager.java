@@ -111,4 +111,8 @@ public class SequenceManager {
         return sequenceHolder.next();
     }
 
+    public static void main(String[] args) {
+        new SequenceManager().next(SequenceKey.LOCATION_STOCK_TABLE_ID);
+    }
+
 }
