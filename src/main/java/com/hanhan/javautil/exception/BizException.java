@@ -2,9 +2,6 @@ package com.hanhan.javautil.exception;
 
 import java.text.MessageFormat;
 
-/**
- * @author pl
- */
 public class BizException extends RuntimeException implements Errors {
     private static final long serialVersionUID = -8763152336479729022L;
     private final int code;
