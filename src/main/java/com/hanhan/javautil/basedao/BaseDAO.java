@@ -26,6 +26,25 @@ public abstract class BaseDAO {
         }
     }
 
+    protected <T> void innerBatchInsertWithKey(BaseDAOMapper<T> mapper, List<T> entities, String message) {
+        try {
+            if (CollectionUtils.isEmpty(entities)) {
+                return;
+            }
+            int i;
+            if (entities.size() == 1) {
+                i = mapper.insert(entities.get(0));
+            } else {
+                i = Lists.partition(entities, 50).stream().map(mapper::insertBatchWithKey).reduce(0, Integer::sum);
+            }
+            if (i != entities.size()) {
+                throw new BizException(BizError.DB_EXCEPTION);
+            }
+        } catch (DuplicateKeyException e) {
+            throw new BizException(BizError.DATA_EXISTED, message);
+        }
+    }
+
     protected <T> void innerBatchInsert(BaseDAOMapper<T> mapper, List<T> entities, String message) {
         try {
             if (CollectionUtils.isEmpty(entities)) {

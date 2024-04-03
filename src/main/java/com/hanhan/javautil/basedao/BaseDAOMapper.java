@@ -6,4 +6,5 @@ import java.util.List;
 public interface BaseDAOMapper<T> extends BaseMapper<T> {
     int insertBatch(List<T> entities);
 
+    int insertBatchWithKey(List<T> entities);
 }
