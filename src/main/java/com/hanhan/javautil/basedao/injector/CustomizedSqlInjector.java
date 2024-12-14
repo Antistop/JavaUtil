@@ -7,7 +7,6 @@ import java.util.List;
 
 /**
  * @author pl
- *
  * 需要加入全局配置对象GlobalConfig
  */
 public class CustomizedSqlInjector extends DefaultSqlInjector  {

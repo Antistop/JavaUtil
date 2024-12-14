@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Component
 public class SequenceManager {
-    private static final long STEP = 1000;
 
     @Getter
     @Setter
@@ -28,13 +27,18 @@ public class SequenceManager {
         private String name;
         private AtomicLong value;
         private long dbValue;
+        private long step;
+
+        public SequenceHolder(long step) {
+            this.step = step;
+        }
 
         public long next() {
             if (value == null) {
                 init();
             }
             long seq = value.incrementAndGet();
-            if (seq > STEP) {
+            if (seq > step) {
                 nextRound();
                 return next();
             } else {
@@ -46,13 +50,13 @@ public class SequenceManager {
             if (value != null) {
                 return;
             }
-            dbValue = nextValue(name) - STEP;
+            dbValue = nextValue(name, step) - step;
             value = new AtomicLong(0);
         }
 
         private synchronized void nextRound() {
-            if (value.get() > STEP) {
-                dbValue = nextValue(name) - STEP;
+            if (value.get() > step) {
+                dbValue = nextValue(name, step) - step;
                 value.set(0);
             }
         }
@@ -83,17 +87,20 @@ public class SequenceManager {
         }
     }
 
-    private long nextValue(String sequenceName) {
+    private long nextValue(String sequenceName, long step) {
         for (int i = 0; i < 10; i++) {
             Sequence sequence = querySequence(sequenceName);
-            int update = sequenceMapper.nextValue(sequence.getSeqValue() + STEP, sequence.getSeqValue(), sequenceName);
+            int update = sequenceMapper.nextValue(sequence.getSeqValue() + step, sequence.getSeqValue(), sequenceName);
             if (update == 1) {
-                return sequence.getSeqValue() + STEP;
+                return sequence.getSeqValue() + step;
             }
         }
         throw new RuntimeException();
     }
 
+    /**
+     * 用于生成业务流水号
+     */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public long next(String sequenceName) {
         SequenceHolder sequenceHolder = holder.get(sequenceName);
@@ -101,7 +108,27 @@ public class SequenceManager {
             synchronized (holder) {
                 sequenceHolder = holder.get(sequenceName);
                 if (sequenceHolder == null) {
-                    sequenceHolder = new SequenceHolder();
+                    sequenceHolder = new SequenceHolder(1);
+                    sequenceHolder.setName(sequenceName);
+                    sequenceHolder.init();
+                    holder.put(sequenceName, sequenceHolder);
+                }
+            }
+        }
+        return sequenceHolder.next();
+    }
+
+    /**
+     * 用于生成数据库ID
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public long nextDbId(String sequenceName) {
+        SequenceHolder sequenceHolder = holder.get(sequenceName);
+        if (sequenceHolder == null) {
+            synchronized (holder) {
+                sequenceHolder = holder.get(sequenceName);
+                if (sequenceHolder == null) {
+                    sequenceHolder = new SequenceHolder(1000);
                     sequenceHolder.setName(sequenceName);
                     sequenceHolder.init();
                     holder.put(sequenceName, sequenceHolder);
@@ -112,7 +139,7 @@ public class SequenceManager {
     }
 
     public static void main(String[] args) {
-        new SequenceManager().next(SequenceKey.LOCATION_STOCK_TABLE_ID);
+        new SequenceManager().nextDbId(SequenceKey.LOCATION_STOCK_TABLE_ID);
     }
 
 }

@@ -7,6 +7,7 @@ public enum BizError implements Errors {
     PARAM_ERROR(-3, "参数异常:{0}"),
     DATA_EXISTED(-4, "数据库已存在数据:{0}"),
     OPTIMISTIC_LOCK_ERROR(-5, "请获取最新数据后重试"),
+    SYSTEM_CONFIG_ERROR(-5, "系统配置错误:{0}"),
     ;
     private final int code;
     private final String msg;
